@@ -1,11 +1,17 @@
+import logging
 from socket import *
 import time
 import json
 import sys
 import re
+import log.client_log_config
+
+
+logger = logging.getLogger('client')
 
 
 def create_presence_msg(account_name='Guest'):
+    logger.debug('Создание presence сообщения')
     presence = {
         "action": "presence",
         "time": time.time(),
@@ -19,6 +25,7 @@ def create_presence_msg(account_name='Guest'):
 
 
 def process_response_from_server(msg):
+    logger.debug('Обработка ответа от сервера')
     if msg['response'] == 200:
         return '200: Ok'
     else:
@@ -35,9 +42,9 @@ def main():
         if server_port < 1024 or server_port > 65535:
             raise ValueError
     except IndexError:
-        print('Укажите IP-адрес и номер порта в формате "ip [port]"')
+        logger.error('Укажите IP-адрес и номер порта в формате "ip [port]"')
     except ValueError:
-        print('Порт должен быть в пределах от 1024 до 65535')
+        logger.error('Порт должен быть в пределах от 1024 до 65535')
         sys.exit(1)
 
     s = socket(AF_INET, SOCK_STREAM)

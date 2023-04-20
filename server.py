@@ -1,10 +1,15 @@
 import sys
 from socket import *
-import time
 import json
+import logging
+import log.server_log_config
+
+
+logger = logging.getLogger('server')
 
 
 def create_response(info):
+    logger.debug('Создание ответа на запрос')
     if 199 < info[0] < 300:
         response = {
             'response': info[0],
@@ -19,6 +24,7 @@ def create_response(info):
 
 
 def process_client_message(msg: dict):
+    logger.debug('Обработка запроса от клиента')
     if 'action' in msg and msg['action'] == 'presence' and 'time' in msg \
             and 'user' in msg and msg['user']['account_name'] == 'Guest':
         return [200, 'OK']
@@ -34,7 +40,7 @@ def main():
         if '-a' in sys.argv:
             server_address = sys.argv[sys.argv.index('-a') + 1]
     except IndexError:
-        print('Введите IP-адрес после параметра "-a"')
+        logger.error('Введите IP-адрес после параметра "-a"')
         sys.exit(1)
 
     try:
@@ -43,9 +49,9 @@ def main():
         if server_port < 1024 or server_port > 65535:
             raise ValueError
     except ValueError:
-        print('Введите корректный порт (от 1024 до 65535')
+        logger.error('Введите корректный порт (от 1024 до 65535')
     except IndexError:
-        print('Введите номер порта после параметра "-p"')
+        logger.error('Введите номер порта после параметра "-p"')
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((server_address, server_port))
@@ -54,16 +60,15 @@ def main():
     try:
         while True:
             client, addr_client = s.accept()
-            print(f'Получен запрос на соединение от {addr_client}')
+            logger.debug(f'Получен запрос на соединение от {addr_client}')
             input_data = client.recv(1024).decode('utf-8')
             msg = json.loads(input_data)
-            print(msg)
             checked_msg = process_client_message(msg)
             response = create_response(checked_msg)
             client.send(json.dumps(response).encode('utf-8'))
             client.close()
     except Exception as err:
-        print(err)
+        logger.error(err)
 
 
 if __name__ == '__main__':
