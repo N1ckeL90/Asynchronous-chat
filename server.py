@@ -3,13 +3,14 @@ from socket import *
 import json
 import logging
 import log.server_log_config
+from decorators import log
 
 
 logger = logging.getLogger('server')
 
 
+@log
 def create_response(info):
-    logger.debug('Создание ответа на запрос')
     if 199 < info[0] < 300:
         response = {
             'response': info[0],
@@ -23,8 +24,8 @@ def create_response(info):
     return response
 
 
+@log
 def process_client_message(msg: dict):
-    logger.debug('Обработка запроса от клиента')
     if 'action' in msg and msg['action'] == 'presence' and 'time' in msg \
             and 'user' in msg and msg['user']['account_name'] == 'Guest':
         return [200, 'OK']
