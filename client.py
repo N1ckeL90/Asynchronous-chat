@@ -5,13 +5,14 @@ import json
 import sys
 import re
 import log.client_log_config
+from decorators import log
 
 
 logger = logging.getLogger('client')
 
 
+@log
 def create_presence_msg(account_name='Guest'):
-    logger.debug('Создание presence сообщения')
     presence = {
         "action": "presence",
         "time": time.time(),
@@ -24,8 +25,8 @@ def create_presence_msg(account_name='Guest'):
     return presence
 
 
+@log
 def process_response_from_server(msg):
-    logger.debug('Обработка ответа от сервера')
     if msg['response'] == 200:
         return '200: Ok'
     else:
