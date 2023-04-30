@@ -6,13 +6,11 @@ import log.server_log_config
 from decorators import log
 import select
 
-
 logger = logging.getLogger("server")
 
 
 # @log
 def create_presence_response(code_num, text_info):
-    response = {}
     try:
         if 199 < code_num < 300:
             response = {
@@ -28,30 +26,31 @@ def create_presence_response(code_num, text_info):
         return response
     except Exception as er:
         logger.error(er)
-    
 
 
 def read_requests(r_clients, all_clients):
     """Чтение запросов из списка клиентов"""
     msg = []
-    
+
     for sock in r_clients:
         try:
             data = sock.recv(1024).decode("utf-8")
             data = json.loads(data)
-            # сразу отправляем presence-сообщение, если есть
+            # Сразу отправляем ответ на presence-сообщение, если есть.
+            # А также определяем имя клиента для этого подключения
             if 'action' in data:
                 if data['action'] == 'presence':
+                    all_clients[sock] = data['user']['account_name']
+                    print(f'Клиент {data["user"]["account_name"]} подключился')
                     resp = create_presence_response(200, 'Ok')
                     sock.send(resp)
                 else:
-                    # иначе сохраняем для отправки другим клиентам
+                    # иначе сохраняем для дальнейшей отправки другим клиенту(-ам)
                     msg = [data, sock]
-               
+
         except:
-            # pass
-            print(f"Клиент {sock} отключился")
-            all_clients.remove(sock)
+            print(f"Клиент {all_clients[sock]} отключился")
+            all_clients.pop(sock)
     return msg
 
 
@@ -60,12 +59,16 @@ def send_messages(msg, w_clients, all_clients):
 
     for sock in w_clients:
         try:
-            if sock != msg[1]:
-                sock.send(json.dumps(msg[0]).encode('utf-8'))
+            if msg[0]['to'] == '#room_name':
+                if sock != msg[1]:
+                    sock.send(json.dumps(msg[0]).encode('utf-8'))
+            else:
+                if msg[0]['to'] == all_clients[sock]:
+                    sock.send(json.dumps(msg[0]).encode('utf-8'))
         except:
-            print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            print(f"Клиент {all_clients[sock]} отключился")
             sock.close()
-            all_clients.remove(sock)
+            all_clients.pop(sock)
     return
 
 
@@ -90,13 +93,12 @@ def mainloop():
         logger.error('Введите корректный порт (от 1024 до 65535')
     except IndexError:
         logger.error('Введите номер порта после параметра "-p"')
-        
-    clients = []
+
+    clients = {}
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((server_address, server_port))
     s.listen(5)
     s.settimeout(0.2)
-
 
     while True:
         try:
@@ -105,12 +107,12 @@ def mainloop():
             pass
         else:
             print(f"Получен запрос на соединение {addr}")
-            clients.append(conn)
+            clients[conn] = None
         finally:
             wait = 2
             r = []
             w = []
-            
+
             try:
                 r, w, e = select.select(clients, clients, [], wait)
             except:
