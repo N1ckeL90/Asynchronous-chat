@@ -97,24 +97,24 @@ def mainloop():
         # Отправка presence сообщения
         send_presence_msg(sock, connect_param[2])
 
-        while True:
+        # while True:
             # режим работы клиента
-            mode = input('Используйте\n'
-                         '"1" для отправки сообщения в общий чат\n'
-                         '"2" для отправки сообщения пользователю\n'
-                         '"!exit" для выхода\n')
-            if mode == '!exit':
-                sys.exit(0)
-            elif mode == '1':
-                message_to = '#room_name'
-                print('Приятного общения!\n')
-                break
-            elif mode == '2':
-                message_to = input('Введите пользователя, которому хотите отправить сообщение: ')
-                print('Приятного общения!\n')
-                break
-            else:
-                print(f'Команды "{mode}" не существует')
+            # mode = input('Используйте\n'
+            #              '"1" для отправки сообщения в общий чат\n'
+            #              '"2" для отправки сообщения пользователю\n'
+            #              '"!exit" для выхода\n')
+            # if mode == '!exit':
+            #     sys.exit(0)
+            # elif mode == '1':
+            #     message_to = '#room_name'
+            #     print('Приятного общения!\n')
+            #     break
+            # elif mode == '2':
+            #     message_to = input('Введите пользователя, которому хотите отправить сообщение: ')
+            #     print('Приятного общения!\n')
+            #     break
+            # else:
+            #     print(f'Команды "{mode}" не существует')
 
         # Создание дополнительного потока для получения сообщений
         t = Thread(target=process_response_from_server, args=(sock, connect_param[2]))
@@ -122,6 +122,7 @@ def mainloop():
         t.start()
 
         # Отправка сообщений
+        message_to = '#room_name'
         while True:
             text = input('')
             if text == '!exit':
